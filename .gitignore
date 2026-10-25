@@ -1,0 +1,63 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Local Persistence & Runtime State
+.data/
+.test_data/
+.test_npc_data/
+.lobby_data/
+.test_lobby_data/
+.test_metrics_data/
+.test_metrics_split/
+
+# Python & Virtual Environments
+.venv/
+*/.venv/
+venv/
+env/
+__pycache__/
+*/__pycache__/
+*.py[cod]
+.pytest_cache/
+*/.pytest_cache/
+
+# Environment Variables (Ignore real secrets, track .env.example)
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Logs & OS artifacts
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+
+# Terraform local state and deployment secrets
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+
+# Planes guardados y archivos locales de contraseñas: los planes en JSON y las
+# copias locales pueden contener secretos.
+*.tfplan
+tfplan
+*.plan
+*password*.txt
+
+# Claves privadas. Ojo: ".pem" a secas solo matchea un archivo llamado
+# literalmente ".pem", no "cloud-key.pem".
+*.pem
+*.key
+id_rsa*
+
+# Generated deployment artifacts
+lobby-service/dist/
+
+# Local source-build cache for Terraform bootstrap
+.build/

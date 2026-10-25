@@ -1,0 +1,316 @@
+{
+  "Comment": "Elastic Worlds durable lifecycle. World state and ownership live in RDS.",
+  "StartAt": "Claim",
+  "TimeoutSeconds": 600,
+  "States": {
+    "Claim": {
+      "Type": "Task",
+      "Resource": "${lifecycle_lambda_arn}",
+      "Parameters": {
+        "action": "claimStop",
+        "operationId.$": "$.operationId",
+        "executionArn.$": "$$.Execution.Id"
+      },
+      "TimeoutSeconds": 35,
+      "ResultPath": "$.task",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "TaskBusy",
+            "TransientDatabaseError"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 3
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.failure",
+          "Next": "Recovery"
+        }
+      ],
+      "Next": "Claimed"
+    },
+    "Claimed": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "And": [
+            {
+              "Variable": "$.task.done",
+              "IsPresent": true
+            },
+            {
+              "Variable": "$.task.done",
+              "BooleanEquals": true
+            }
+          ],
+          "Next": "Success"
+        },
+        {
+          "And": [
+            {
+              "Variable": "$.task.waiting",
+              "IsPresent": true
+            },
+            {
+              "Variable": "$.task.waiting",
+              "BooleanEquals": true
+            }
+          ],
+          "Next": "WaitClaim"
+        },
+        {
+          "And": [
+            {
+              "Variable": "$.task.released",
+              "IsPresent": true
+            },
+            {
+              "Variable": "$.task.released",
+              "BooleanEquals": true
+            }
+          ],
+          "Next": "Delete"
+        }
+      ],
+      "Default": "Remove"
+    },
+    "WaitClaim": {
+      "Type": "Wait",
+      "Seconds": 2,
+      "Next": "Claim"
+    },
+    "Remove": {
+      "Type": "Task",
+      "Resource": "${lifecycle_lambda_arn}",
+      "Parameters": {
+        "action": "remove",
+        "operationId.$": "$.operationId",
+        "executionArn.$": "$$.Execution.Id"
+      },
+      "TimeoutSeconds": 35,
+      "ResultPath": "$.task",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "TaskBusy",
+            "TransientDatabaseError"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 3
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.failure",
+          "Next": "Recovery"
+        }
+      ],
+      "Next": "Removed"
+    },
+    "Removed": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "And": [
+            {
+              "Variable": "$.task.recoveryPending",
+              "IsPresent": true
+            },
+            {
+              "Variable": "$.task.recoveryPending",
+              "BooleanEquals": true
+            }
+          ],
+          "Next": "Deferred"
+        },
+        {
+          "And": [
+            {
+              "Variable": "$.task.removed",
+              "IsPresent": true
+            },
+            {
+              "Variable": "$.task.removed",
+              "BooleanEquals": true
+            }
+          ],
+          "Next": "Release"
+        }
+      ],
+      "Default": "WaitRemoval"
+    },
+    "WaitRemoval": {
+      "Type": "Wait",
+      "Seconds": 2,
+      "Next": "Remove"
+    },
+    "Release": {
+      "Type": "Task",
+      "Resource": "${lifecycle_lambda_arn}",
+      "Parameters": {
+        "action": "release",
+        "operationId.$": "$.operationId",
+        "executionArn.$": "$$.Execution.Id"
+      },
+      "TimeoutSeconds": 35,
+      "ResultPath": "$.task",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "TaskBusy",
+            "TransientDatabaseError"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 3
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.failure",
+          "Next": "Recovery"
+        }
+      ],
+      "Next": "Delete"
+    },
+    "Delete": {
+      "Type": "Task",
+      "Resource": "${lifecycle_lambda_arn}",
+      "Parameters": {
+        "action": "delete",
+        "operationId.$": "$.operationId",
+        "executionArn.$": "$$.Execution.Id"
+      },
+      "TimeoutSeconds": 35,
+      "ResultPath": "$.task",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "TaskBusy",
+            "TransientDatabaseError"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 3
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.failure",
+          "Next": "Recovery"
+        }
+      ],
+      "Next": "Finish"
+    },
+    "Finish": {
+      "Type": "Task",
+      "Resource": "${lifecycle_lambda_arn}",
+      "Parameters": {
+        "action": "finish",
+        "operationId.$": "$.operationId",
+        "executionArn.$": "$$.Execution.Id"
+      },
+      "TimeoutSeconds": 35,
+      "ResultPath": "$.task",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "TaskBusy",
+            "TransientDatabaseError"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 3
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.failure",
+          "Next": "Recovery"
+        }
+      ],
+      "Next": "Success"
+    },
+    "Recovery": {
+      "Type": "Task",
+      "Resource": "${lifecycle_lambda_arn}",
+      "Parameters": {
+        "action": "recovery",
+        "operationId.$": "$.operationId",
+        "executionArn.$": "$$.Execution.Id"
+      },
+      "TimeoutSeconds": 35,
+      "ResultPath": "$.task",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "TaskBusy",
+            "TransientDatabaseError"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 3
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.failure",
+          "Next": "Deferred"
+        }
+      ],
+      "Next": "Deferred"
+    },
+    "Deferred": {
+      "Type": "Succeed"
+    },
+    "Success": {
+      "Type": "Succeed"
+    }
+  }
+}

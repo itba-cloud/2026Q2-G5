@@ -1,0 +1,31 @@
+{
+  "name": "elastic-worlds-online",
+  "version": "1.0.0",
+  "description": "Elastic Worlds - Cloud Architecture & Multiplayer Game",
+  "type": "module",
+  "scripts": {
+    "world": "node world-service/src/index.js",
+    "world:dev": "node --watch world-service/src/index.js",
+    "lobby": "node lobby-service/src/index.js",
+    "lobby:dev": "node --watch lobby-service/src/index.js",
+    "metrics": "node metrics-service/src/index.js",
+    "metrics:dev": "node --watch metrics-service/src/index.js",
+    "client": "node client/server.js",
+    "npc": "node scripts/run-python.js npc-service/src/main.py",
+    "test:world": "node world-service/tests/telemetry-publisher-test.js && node world-service/tests/smoke-test.js && node world-service/tests/gameplay-test.js && node world-service/tests/collision-test.js && node world-service/tests/gameloop-test.js",
+    "test:lobby": "npm --prefix lobby-service test",
+    "test:metrics": "node metrics-service/tests/dynamodb-store-test.js && node metrics-service/tests/metrics-test.js && node --test metrics-service/tests/auth-password-test.js",
+    "test:npc": "node scripts/run-python.js -m pytest npc-service/tests -m \"not integration\"",
+    "test:client": "node client/tests/runtime-config-test.js && node client/tests/prediction-test.js && node client/tests/prediction-smoothness-test.js && node --test client/tests/async-api-test.js && node --test client/tests/world-identity-test.js",
+    "test": "npm run test:client && npm run test:world && npm run test:lobby && npm run test:metrics && npm run test:npc",
+    "test:serverless": "npm --prefix lobby-service run test:serverless"
+  },
+  "keywords": [
+    "cloud-game",
+    "websockets",
+    "multiplayer",
+    "aws"
+  ],
+  "author": "",
+  "license": "ISC"
+}

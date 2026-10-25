@@ -1,16 +1,16 @@
 # ----------------------------------------------------------------------------------
 # Dependabot configurations:
-# Enable version updates for terraformm, looking for diferent files in every
-# specified directories, with a daily schedule and a security label
-# ---------------------------------------------------------------------------------- 
+# Enable version updates for terraform, looking for different files in every
+# specified directory, with a weekly schedule and a security label
+# ----------------------------------------------------------------------------------
 
 version: 2
 updates:
   # --------------------------------------------------------------
-  #  Looking for a `terraform.tf` file in the ORGANIZATION path
-  # -------------------------------------------------------------- 
+  #  Terraform root module in infra/
+  # --------------------------------------------------------------
   - package-ecosystem: 'terraform'
-    directory: '/terraform/organization'
+    directory: '/infra'
     schedule:
       interval: 'weekly'
     ignore:
@@ -21,7 +21,7 @@ updates:
 
   # ----------------------------------------------------------------------
   # Check for workflow files in .github/workflows` path
-  # ---------------------------------------------------------------------- 
+  # ----------------------------------------------------------------------
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:

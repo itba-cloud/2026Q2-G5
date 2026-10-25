@@ -1,0 +1,83 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Escribir "deploy" para confirmar el deploy'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# Nunca dos applies o destroys a la vez sobre el mismo estado.
+concurrency:
+  group: terraform-lab
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm == 'deploy'
+    timeout-minutes: 120
+
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_REGION: us-east-1
+      AWS_DEFAULT_REGION: us-east-1
+      TF_IN_AUTOMATION: true
+      TF_INPUT: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.1
+          terraform_wrapper: false
+
+      # Bucket privado y versionado para el estado remoto (idempotente).
+      - name: Create or verify the state bucket
+        id: state
+        run: |
+          out="$(python3 scripts/bootstrap-state-backend.py --execute)"
+          echo "$out"
+          echo "bucket=$(echo "$out" | python3 -c 'import json,sys; print(json.load(sys.stdin)["bucket"])')" >> "$GITHUB_OUTPUT"
+
+      - name: Init
+        run: |
+          terraform -chdir=infra init \
+            -backend-config="bucket=${{ steps.state.outputs.bucket }}" \
+            -backend-config="key=elastic-worlds/terraform.tfstate" \
+            -backend-config="region=${AWS_REGION}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+
+      - name: Validate
+        run: terraform -chdir=infra validate
+
+      # bootstrap_from_source=true (default): construye las imágenes Docker, los ZIP
+      # de las Lambdas y el JAR de Flink desde este checkout y los sube a AWS.
+      - name: Plan
+        run: terraform -chdir=infra plan -out=tfplan
+
+      - name: Apply
+        run: terraform -chdir=infra apply -auto-approve tfplan
+
+      - name: Write deployment summary
+        run: |
+          {
+            echo "## Deployment outputs"
+            echo ""
+            echo '```'
+            terraform -chdir=infra output
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

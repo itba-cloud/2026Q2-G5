@@ -2,6 +2,10 @@
 # They are provided by a third-party and are governed by
 # separate terms of service, privacy policy, and support
 # documentation.
+#
+# tfsec quedó deprecado y su parser no entiende los bloques `ephemeral` de
+# Terraform >= 1.10 (infra/secrets.tf). Se usa Trivy, su sucesor oficial,
+# con el mismo esquema: reporte SARIF a Code scanning y resumen en el PR.
 
 name: Terraform Security
 
@@ -10,7 +14,7 @@ on:
 
 jobs:
   tfsec-run:
-    name: Run tfsec sarif report
+    name: Run trivy sarif report
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -19,31 +23,47 @@ jobs:
 
     steps:
       - name: Clone repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Run tfsec
-        uses: aquasecurity/tfsec-sarif-action@v0.1.3
+      - name: Run trivy
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
-          sarif_file: tfsec.sarif         
+          scan-type: config
+          scan-ref: infra
+          format: sarif
+          output: trivy.sarif
+          exit-code: '0'
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with: # Path to SARIF file relative to the root of the repository
-          sarif_file: tfsec.sarif
+          sarif_file: trivy.sarif
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
   tf-comments:
-    name: Terraform Security PR commenter
+    name: Terraform Security summary
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Clone repo
-        uses: actions/checkout@master
-      - name: tfsec
-        uses: aquasecurity/tfsec-pr-commenter-action@1672d3f23fd98a39c30d0fb7d8d1b4f0967134bd
+        uses: actions/checkout@v4
+
+      - name: Run trivy
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
-          working_directory: terraform/organization
-          tfsec_args: --exclude-path 'terraform/modules'
-          tfsec_formats: sarif,csv
-          soft_fail_commenter: true # Fails the check
-          github_token: ${{ github.token }}
+          scan-type: config
+          scan-ref: infra
+          format: table
+          output: trivy.txt
+          exit-code: '0' # soft fail: informa, no bloquea el PR
+
+      - name: Publish summary
+        run: |
+          {
+            echo "## Terraform Security (trivy config infra)"
+            echo '```'
+            cat trivy.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

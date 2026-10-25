@@ -1,0 +1,20 @@
+# Evaluación completa en una cuenta nueva; copiar fuera del repositorio.
+# No usar esta configuración para migrar un despliegue existente.
+aws_region                        = "us-east-1"
+project_name                      = "ewo-evaluacion"
+bootstrap_from_source             = true
+lobby_maintenance_enabled          = true
+lobby_maintenance_interval_minutes = 1
+npc_min_count                     = 2
+npc_max_count                     = 4
+npc_autoscaling_enabled            = true
+metrics_min_count                 = 2
+metrics_max_count                 = 4
+metrics_autoscaling_enabled        = true
+start_telemetry_application        = true
+cleanup_bootstrap_buckets         = false
+lab_role_name                     = "LabRole"
+# Contraseñas: las genera RDS y Terraform en Secrets Manager; no se pasan.
+# Imágenes, ZIP y JAR se construyen desde fuente; no se necesita key pair.
+# Incluye Secrets Manager, ElastiCache con réplica y RDS Multi-AZ.
+# Las credenciales temporales AWS se toman de la sesión local vigente.

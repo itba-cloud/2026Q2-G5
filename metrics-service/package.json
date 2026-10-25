@@ -1,0 +1,28 @@
+{
+  "name": "metrics-service",
+  "version": "1.0.0",
+  "description": "Fleet metrics collector and cost dashboard API for Elastic Worlds",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node tests/dynamodb-store-test.js && node tests/metrics-test.js && node --test tests/auth-password-test.js"
+  },
+  "keywords": [
+    "metrics",
+    "monitoring",
+    "cost",
+    "cloud-game"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1152.0",
+    "@aws-sdk/client-secrets-manager": "3.1152.0",
+    "@aws-sdk/lib-dynamodb": "^3.1152.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}

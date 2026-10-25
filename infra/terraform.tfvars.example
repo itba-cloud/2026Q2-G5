@@ -1,0 +1,37 @@
+# Copy to terraform.tfvars for local overrides. Do not commit terraform.tfvars.
+# Fresh Learner Lab deployments work with the defaults below: source-built
+# artifacts, Lambda Lobby, Step Functions and one regional maintenance schedule.
+# Worlds run as one Fargate task each.
+bootstrap_from_source              = true
+lobby_maintenance_enabled          = true
+lobby_maintenance_interval_minutes = 1
+
+# No passwords to supply: RDS and Terraform generate them in Secrets Manager.
+# Optional overrides for disposable Lobby-only tests:
+# project_name                = "ewo-manual"
+# start_telemetry_application = true
+# cleanup_bootstrap_buckets   = true # destroy permanently deletes owned bucket data
+# db_multi_az                 = false # RDS sin standby: la mitad del costo, sin failover
+
+# Mundos en Fargate (una task ECS por mundo). Con bootstrap_from_source la imagen
+# del mundo se sube a ECR automaticamente; si no, world_task_image tiene que
+# apuntar a una imagen en ECR.
+# world_task_image        = "123456789012.dkr.ecr.us-east-1.amazonaws.com/elastic-worlds-world:tag"
+# world_health_timeout_ms = 120000
+# world_task_cpu          = 256
+# world_task_memory       = 512
+
+# NPC Service en Fargate (subredes privadas). Sin bootstrap_from_source, la imagen
+# tiene que estar en ECR: las tasks no tienen salida a internet.
+# npc_task_image          = "123456789012.dkr.ecr.us-east-1.amazonaws.com/elastic-worlds-npc:tag"
+# npc_min_count           = 2
+# npc_max_count           = 4
+# npc_autoscaling_enabled = true # false si el Learner Lab no deja usar Application Auto Scaling
+# npc_max_worlds_per_task = 10
+
+# Metrics Service en Fargate (subredes privadas, detras del ALB). Misma regla que
+# el NPC: sin bootstrap_from_source la imagen tiene que estar en ECR.
+# metrics_task_image          = "123456789012.dkr.ecr.us-east-1.amazonaws.com/elastic-worlds-metrics:tag"
+# metrics_min_count           = 2
+# metrics_max_count           = 4
+# metrics_autoscaling_enabled = true # false si el Learner Lab no deja usar Application Auto Scaling

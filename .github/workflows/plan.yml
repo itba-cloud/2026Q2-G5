@@ -1,0 +1,73 @@
+name: Plan
+
+# Corre solo en cada push a main; también se puede lanzar a mano.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Escribir "plan" para ejecutar terraform plan'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-lab
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.inputs.confirm == 'plan'
+    timeout-minutes: 60
+
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_REGION: us-east-1
+      AWS_DEFAULT_REGION: us-east-1
+      TF_IN_AUTOMATION: true
+      TF_INPUT: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.1
+          terraform_wrapper: false
+
+      - name: Create or verify the state bucket
+        id: state
+        run: |
+          out="$(python3 scripts/bootstrap-state-backend.py --execute)"
+          echo "$out"
+          echo "bucket=$(echo "$out" | python3 -c 'import json,sys; print(json.load(sys.stdin)["bucket"])')" >> "$GITHUB_OUTPUT"
+
+      - name: Init
+        run: |
+          terraform -chdir=infra init \
+            -backend-config="bucket=${{ steps.state.outputs.bucket }}" \
+            -backend-config="key=elastic-worlds/terraform.tfstate" \
+            -backend-config="region=${AWS_REGION}" \
+            -backend-config="encrypt=true" \
+            -backend-config="use_lockfile=true"
+
+      - name: Plan
+        run: terraform -chdir=infra plan -no-color 2>&1 | tee plan_output.txt
+
+      - name: Upload plan output
+        uses: actions/upload-artifact@v4
+        with:
+          name: plan-${{ github.run_id }}
+          path: plan_output.txt
+          retention-days: 7

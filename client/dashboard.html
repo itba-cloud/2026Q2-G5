@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elastic Worlds — Monitoreo y Costos</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <div class="dash-container">
+
+    <header class="dash-header">
+      <div>
+        <div class="dash-title">📊 Elastic Worlds — Monitoreo y Costos</div>
+        <div class="dash-subtitle">Estado de las partidas activas, rendimiento de los servidores y costo estimado por mundo</div>
+      </div>
+      <div class="dash-header-actions">
+        <span class="status-pill">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-text">Conectando…</span>
+        </span>
+        <button class="btn" id="btn-refresh">🔄 Refrescar</button>
+        <button class="btn" id="btn-logout" title="Cerrar sesión de métricas">🔒 Salir</button>
+        <a class="btn btn-link" href="index.html">← Volver al juego</a>
+      </div>
+    </header>
+
+    <div id="error-banner" class="error-banner" hidden></div>
+
+    <!-- KPIs de flota -->
+    <section class="kpi-grid" id="kpi-grid"></section>
+
+    <!-- Series temporales -->
+    <section class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Evolución en el tiempo</span>
+        <span class="panel-hint" id="history-window">—</span>
+      </div>
+      <div class="panel-body">
+        <div class="chart-grid" id="chart-grid"></div>
+      </div>
+    </section>
+
+    <!-- Mundos -->
+    <section class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Partidas</span>
+        <span class="panel-hint">Métricas en vivo tomadas de cada contenedor de mundo</span>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Mundo</th>
+              <th>Estado</th>
+              <th>Host</th>
+              <th>Jugadores</th>
+              <th>Memoria</th>
+              <th>Game loop</th>
+              <th>Latencia IA</th>
+              <th>Entidades</th>
+              <th>USD/hora</th>
+              <th>Acumulado</th>
+              <th>Dimensionamiento</th>
+            </tr>
+          </thead>
+          <tbody id="worlds-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Hosts -->
+    <section class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Flota de hosts</span>
+        <span class="panel-hint">Capacidad y costo fijo de cada nodo de cómputo</span>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Host</th>
+              <th>Estado</th>
+              <th>IP</th>
+              <th>Instancia</th>
+              <th>vCPU / RAM</th>
+              <th>Ocupación</th>
+              <th>Memoria usada</th>
+              <th>USD/hora</th>
+              <th>USD/mes</th>
+            </tr>
+          </thead>
+          <tbody id="hosts-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Recomendaciones -->
+    <section class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Recomendaciones de aprovisionamiento</span>
+        <span class="panel-hint">Detección de recursos sobredimensionados y saturados</span>
+      </div>
+      <div class="panel-body">
+        <div class="rec-list" id="rec-list"></div>
+      </div>
+    </section>
+
+    <footer class="dash-footer">
+      <div id="footer-info">—</div>
+      <div>El costo se atribuye por <em>slot</em>: cada host vende <code>maxWorlds</code> slots y cada mundo activo paga uno, corra lo que corra dentro.</div>
+    </footer>
+
+  </div>
+
+  <!-- Modal de Autenticación de Métricas -->
+  <div id="auth-modal" class="modal-backdrop" hidden>
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 class="modal-title">🔐 Acceso al Panel de Métricas</h2>
+        <p class="modal-subtitle">Este servicio está protegido por Basic Auth para resguardar la infraestructura interna.</p>
+      </div>
+      <form id="auth-form" class="modal-form">
+        <div class="form-group">
+          <label for="auth-user">Usuario:</label>
+          <input type="text" id="auth-user" placeholder="admin" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="auth-pass">Contraseña:</label>
+          <input type="password" id="auth-pass" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <div id="auth-error" class="auth-error-msg" hidden></div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary" id="btn-auth-submit">Ingresar</button>
+          <a href="index.html" class="btn btn-secondary">Volver al juego</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="runtime-config.js"></script>
+  <script type="module" src="js/dashboard.js"></script>
+</body>
+</html>

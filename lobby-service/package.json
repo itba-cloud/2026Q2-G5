@@ -1,0 +1,39 @@
+{
+  "name": "lobby-service",
+  "version": "1.0.0",
+  "description": "Control plane and world registry API for Elastic Worlds",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node tests/lobby-test.js && node tests/migrate-test.js && node tests/reservations-test.js && node tests/dead-host-reconciliation-test.js && node tests/rds-repository-test.js && node tests/rds-lobby-test.js",
+    "migrate": "node src/store/migrate-cli.js",
+    "test:serverless": "node --test tests/announcement-publisher-test.js tests/secret-password-test.js tests/operations-test.js tests/lifecycle-tasks-test.js tests/docker-retry-test.js tests/worker-test.js tests/host-retirement-test.js tests/lambda-workflows-test.js tests/scheduled-maintenance-test.js tests/migration-lambda-test.js tests/fargate-launcher-test.js tests/fargate-lifecycle-test.js",
+    "package:lambda": "node scripts/package-lambda.js",
+    "test:lambda-packages": "node --test tests/lambda-packages-test.js"
+  },
+  "keywords": [
+    "lobby",
+    "matchmaker",
+    "control-plane",
+    "cloud-game"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-ec2": "3.1152.0",
+    "@aws-sdk/client-ecs": "3.1152.0",
+    "@aws-sdk/client-secrets-manager": "3.1152.0",
+    "@aws-sdk/client-sfn": "3.1152.0",
+    "@codegenie/serverless-express": "4.17.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "ioredis": "^6.0.0",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}
